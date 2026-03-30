@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_start">#0B0F19</color> <color name="bg_end">#1A1A2E</color>   <color name="gold_start">#F59E0B</color> <color name="gold_end">#FBBF24</color>   <color name="glass_card">#1AFFFFFF</color>
+    <color name="glass_stroke">#33FFFFFF</color>
+
+    <color name="textPrimary">#F8FAFC</color>
+    <color name="textSecondary">#94A3B8</color>
+</resources>
