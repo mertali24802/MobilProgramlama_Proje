@@ -1,128 +1,130 @@
 package com.example.astrorehber;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import java.util.ArrayList;
 import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ZodiacAdapter adapter;
-    private List<Zodiac> zodiacList;
+    private DatabaseHelper dbHelper;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        recyclerView = findViewById(R.id.recyclerViewZodiacs);
+        dbHelper = new DatabaseHelper(this);
+        sessionManager = new SessionManager(this);
 
+        android.widget.TextView tvSelectTitle = findViewById(R.id.tvSelectTitle);
+        String userName = sessionManager.getFullName();
+        tvSelectTitle.setText("Hoş geldin, " + userName + " ✨");
+
+        // Çıkış Yap Butonu İşlemi
+        ImageView btnLogout = findViewById(R.id.btnLogout);
+        if(btnLogout != null) {
+            btnLogout.setOnClickListener(v -> {
+                sessionManager.logoutUser(); // Hafızayı sil
+                Toast.makeText(HomeActivity.this, "Oturum kapatıldı.", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(HomeActivity.this, LoginActivity.class));
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                finish(); // Ana sayfayı kapat ki geri tuşuyla dönemesin
+            });
+        }
+
+        recyclerView = findViewById(R.id.recyclerViewZodiacs);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        zodiacList = new ArrayList<>();
+        // EĞER VERİTABANI BOŞSA, 12 BURCU İÇERİ AKTAR
+        if (dbHelper.isZodiacTableEmpty()) {
+            insertAllZodiacs();
+        }
 
-
-        zodiacList.add(new Zodiac(
-                "Koç", "21 Mar - 19 Nis", R.drawable.koc, R.drawable.koc2,
-                "Gezegenlerin bugünkü dizilimi, içindeki savaşçı ruhu ön plana çıkarıyor! Kariyerinde veya okulunda uzun süredir ertelediğin o büyük adımı atmak için gökyüzü sana tam destek veriyor. Akşam saatlerinde enerjini spora yönlendirmek iyi gelebilir.",
-                "Bu hafta maddi konularda beklenmedik sürprizlere açık ol. Haftanın ortasında alacağın bir haber, tüm planlarını değiştirebilir. Enerjini doğru yönetirsen haftayı büyük bir zaferle kapatacaksın.",
-                "Bu ay tamamen yenilenme ve küllerinden doğma ayı! Mars'ın etkisiyle hem fiziksel hem zihinsel olarak zirvede hissedeceksin. Özellikle ayın 15'inden sonra aşk hayatında romantik rüzgarlar esmeye başlıyor.",
-                "Ateş", "Mars", "9", "Kırmızı"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Boğa", "20 Nis - 20 May", R.drawable.boga, R.drawable.boga2,
-                "Bugün konfor alanından çıkmak istemeyebilirsin ve bunda tamamen haklısın. Kendine vakit ayır, sevdiğin bir kahveyi iç ve zihnini dinlendir. Akşama doğru yakın bir dostunla yapacağın derin sohbet sana çok iyi gelecek.",
-                "Venüs'ün konumu bu hafta seni adeta bir mıknatıs gibi çekici yapıyor. Çevrendeki insanların ilgisi sürekli senin üzerinde olacak. İş hayatında sabrının meyvelerini toplamaya başlayacağın verimli bir hafta.",
-                "Finansal anlamda altın çağını yaşamaya hazır mısın? Bu ay, geçmişte ektiğin tohumların hasadını yapacaksın. Ancak inatçı tavırlarından biraz ödün vermen, ikili ilişkilerde işleri senin için çok daha kolaylaştıracak.",
-                "Toprak", "Venüs", "6", "Zümrüt Yeşili"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "İkizler", "21 May - 20 Haz", R.drawable.ikizler, R.drawable.ikizler2,
-                "Zihninin bugün saatte bin kilometre hızla çalıştığını hissedebilirsin! Yeni fikirler üretmek ve iletişim kurmak için harika bir gün. Ancak aynı anda çok fazla işe odaklanıp enerjini bölmemeye dikkat et.",
-                "Bu hafta sosyallik tavan yapıyor. Eski arkadaşlarından alacağın mesajlar veya sürpriz davetler haftanı renklendirecek. Perşembe günü karşına çıkacak yeni bir fırsatı değerlendirmeden önce iki kez düşün.",
-                "Merkür'ün hareketleri bu ay sana yeni bir eğitim veya seyahat kapısı aralayabilir. Kendini geliştirmek istediğin o konuya başlamanın tam vakti. Aşk hayatında ise yüzeysel tartışmalardan uzak durmalısın.",
-                "Hava", "Merkür", "5", "Sarı"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Yengeç", "21 Haz - 22 Tem", R.drawable.yengec, R.drawable.yengec2,
-                "Bugün duygusal antenlerin çok açık. Çevrendeki insanların ne hissettiğini onlardan bile önce anlayabilirsin. Empati yeteneğin sayesinde bir arkadaşının büyük bir sorununu çözeceksin.",
-                "Ailevi konuların ve ev yaşantısının ön planda olduğu bir hafta. Evinde yapacağın ufak bir dekorasyon değişikliği veya temizlik, ruhunu inanılmaz derecede arındıracak. Cuma günü harcamalarına dikkat et.",
-                "Ay'ın fazları duygusal dünyanda medcezirler yaratsa da, bu ay içsel huzuru bulacağın o özel döneme giriyorsun. Sezgilerine güvenerek aldığın kararların ne kadar doğru olduğunu ay sonuna doğru net bir şekilde göreceksin.",
-                "Su", "Ay", "2", "Gümüş/Beyaz"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Aslan", "23 Tem - 22 Ağu", R.drawable.aslan, R.drawable.aslan2,
-                "Sahne senin! Bugün girdiğin her ortamda dikkatleri üzerine çekmeyi başaracaksın. Özgüvenin sayesinde liderlik vasıflarını gösterebileceğin bir durumla karşılaşabilirsin. Parlamaktan çekinme.",
-                "Yaratıcılığının zirvesinde olduğun bir hafta. İster bir proje, ister bir sanat eseri olsun; elini attığın her şeyi güzelleştireceksin. Hafta sonu romantik bir sürprize hazırlıklı ol.",
-                "Güneş'in enerjisi tüm ay boyunca sana canlılık verecek. Kariyerinde büyük bir sıçrama yaşama ihtimalin çok yüksek. Ancak bu başarı sarhoşluğu içinde, sana her zaman destek olan insanları ihmal etmemelisin.",
-                "Ateş", "Güneş", "1", "Altın/Turuncu"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Başak", "23 Ağu - 22 Eyl", R.drawable.basak, R.drawable.basak2,
-                "Detayların gücü bugün senin elinde. Başkalarının gözden kaçırdığı o ufak tefek şeyleri fark edip büyük bir krizi önleyebilirsin. Sadece kendine ve çevrendekilere karşı fazla eleştirel olmamaya çalış.",
-                "Rutinlerini yeniden düzenlemek ve sağlığına odaklanmak için mükemmel bir hafta. Spora başlamak veya diyetini gözden geçirmek istiyorsan yıldızlar seni destekliyor. İş yerinde takdir edileceksin.",
-                "Analitik zekanın sana büyük paralar veya başarılar kazandırabileceği bir ay. Planlı ve programlı ilerlediğin sürece önünde hiçbir engel duramaz. Ayın 20'sinden sonra eski bir borç veya alacak gündeme gelebilir.",
-                "Toprak", "Merkür", "5", "Lacivert"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Terazi", "23 Eyl - 22 Eki", R.drawable.terazi, R.drawable.terazi2,
-                "Uyum ve denge arayışın bugün sonuç veriyor. Etrafındaki çatışmaları tatlı dilinle çözecek ve aranılan arabulucu olacaksın. Estetik konulara ilgin artabilir, kendine küçük bir hediye al.",
-                "İkili ilişkiler ve ortaklıklar haftanın ana teması. Sevdiğin kişiyle veya iş ortağınla ortak kararlar almak için harika günlerden geçiyorsun. Kararsızlık huyunu bir kenara bırakıp net adımlar atma zamanı.",
-                "Aşk gezegeni Venüs, bu ay seni romantizmin doruklarına çıkaracak. Yalnızsan, katılacağın bir etkinlikte kalbini hızla çarptıracak biriyle tanışabilirsin. İlişkin varsa, bir sonraki ciddiyet aşamasına geçilebilir.",
-                "Hava", "Venüs", "6", "Açık Pembe"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Akrep", "23 Eki - 21 Kas", R.drawable.akrep, R.drawable.akrep2,
-                "Bugün hislerin o kadar kuvvetli ki adeta insanların zihnini okuyorsun. Karşına çıkan fırsatların arka planını rahatça görebilirsin. Sezgilerine güven, onlar seni asla yanıltmaz.",
-                "Küllerinden doğma haftası! Bitişler ve yeni başlangıçlar bir arada. Artık sana hizmet etmeyen alışkanlıkları veya toksik ilişkileri hayatından çıkarmak için gereken cesareti kendinde bulacaksın.",
-                "Derin tutkular ve finansal stratejiler bu ayına damga vuracak. Miras, kredi veya ortaklıklardan gelecek paralarla ilgili pozitif gelişmeler yaşanabilir. Gizemli tavrın çevrendekileri sana daha çok çekecek.",
-                "Su", "Plüton", "8", "Bordo/Siyah"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Yay", "22 Kas - 21 Ara", R.drawable.yay, R.drawable.yay2,
-                "İçindeki keşfetme arzusu bugün sınır tanımıyor! Rutin işler bugün seni fazlasıyla sıkabilir. Yeni bir şeyler öğrenmek, ufak bir kaçamak yapmak veya farklı kültürlerden insanlarla konuşmak isteyebilirsin.",
-                "İyimserliğinin sana kapılar açtığı bir hafta. Şans gezegeni Jüpiter arkanda! Özellikle eğitim, yurt dışı bağlantılı işler veya hukuki konularda beklediğin olumlu sonuçları alacaksın.",
-                "Bu ay felsefi düşüncelere dalıp hayatın anlamını sorgulayabilirsin. Büyük resmi görme yeteneğin sayesinde hayatındaki hedefleri güncelleyeceksin. Özgürlüğünden ödün vermeden yaşayacağın macera dolu bir ay.",
-                "Ateş", "Jüpiter", "3", "Mor"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Oğlak", "22 Ara - 19 Oca", R.drawable.oglak, R.drawable.oglak2,
-                "Disiplin ve sorumluluk bugün senin göbek adın. Masandaki işleri büyük bir soğukkanlılıkla ve sırasıyla halledeceksin. Sadece biraz mola vermeyi ve omzundaki yükleri hafifletmeyi unutma.",
-                "Kariyer evinde parladığın bir hafta! Yöneticilerin veya hocaların azmini ve çalışma disiplinini fark edecek. Uzun süredir hak ettiğin o terfi veya onayı almak için mükemmel zamanlama.",
-                "Satürn'ün çocukları olarak emek vermeden hiçbir şeyin elde edilmeyeceğini çok iyi biliyorsun. Bu ay ektiğin tohumlar yeşerecek. İş hayatındaki bu yoğunluğu, ailenle geçireceğin kaliteli zamanla dengelemelisin.",
-                "Toprak", "Satürn", "8", "Koyu Yeşil"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Kova", "20 Oca - 18 Şub", R.drawable.kova, R.drawable.kova2,
-                "Orijinal fikirlerinle bugün herkesi şaşırtmaya hazırsın. Sorunlara getirdiğin alışılmışın dışındaki çözümler büyük takdir toplayacak. Teknolojik aletlerle ilgili bir alışveriş gündeminde olabilir.",
-                "Sosyal çevrenin genişlediği, yeni gruplara ve topluluklara dahil olacağın bir hafta. Birlikte hareket etmek ve ekip çalışmaları sana büyük bir vizyon katacak. İdealist fikirlerini paylaşmaktan çekinme.",
-                "Uranüs'ün isyankar ruhu bu ay seni büyük bir değişime zorluyor. Hayatında aniden yön değiştirmek, yeni bir şehre taşınmak veya radikal bir karar almak isteyebilirsin. Geleceğe yönelik umutların yeşeriyor.",
-                "Hava", "Uranüs", "4", "Elektrik Mavisi"
-        ));
-
-        zodiacList.add(new Zodiac(
-                "Balık", "19 Şub - 20 Mar", R.drawable.balik, R.drawable.balik2,
-                "Bugün hayal dünyan oldukça renkli ve ilham dolusun. Sanatsal yeteneklerini konuşturmak, müzik dinlemek veya yazı yazmak için harika bir gün. İç sesin sana ne yapman gerektiğini fısıldıyor.",
-                "Şefkatinin ve merhametinin ön plana çıktığı bir hafta. Yardıma ihtiyacı olan birine uzatacağın el, evren tarafından sana katlanarak geri dönecek. Rüyalarının mesajlarına bu hafta ekstra dikkat et.",
-                "Bilinçaltının derinliklerine inip ruhsal olarak şifalanacağın bir ay. Meditasyon yapmak, su kenarında vakit geçirmek enerjini tazeleyecek. Aşk hayatında ise tamamen ruh eşi bağlantıları arayışındasın.",
-                "Su", "Neptün", "7", "Deniz Mavisi"
-        ));
-
-        // Adapter'ı bağla
+        // Burçları veritabanından çek ve listele
+        List<Zodiac> zodiacList = dbHelper.getAllZodiacs();
         adapter = new ZodiacAdapter(zodiacList);
         recyclerView.setAdapter(adapter);
+    }
+
+    private void insertAllZodiacs() {
+        dbHelper.addZodiac(new Zodiac("Koç", "21 Mar - 19 Nis", R.drawable.koc, R.drawable.koc2,
+                "Bugün yönetici gezegenin Mars sana inanılmaz bir cesaret veriyor. Ertelediğin kararları almak için harika bir gün.",
+                "Kariyer evinde parlayacağın bir hafta. Özellikle Çarşamba günü alacağın bir mail tüm planlarını olumlu yönde değiştirebilir.",
+                "Bu ay tamamen küllerinden doğuyorsun. Hem fiziksel sağlığın hem de zihinsel netliğin zirvede olacak. Aşk hayatında sürprizler yolda.",
+                "Ateş", "Mars", "9", "Kırmızı"));
+
+        dbHelper.addZodiac(new Zodiac("Boğa", "20 Nis - 20 May", R.drawable.boga, R.drawable.boga2,
+                "Konfor alanından çıkmak istemesen de, bugün karşına çıkacak bir fırsat seni harekete geçmeye zorlayacak. İnatçılığı bırak.",
+                "Maddi konuların ön planda olduğu bir hafta. Yatırımlarını gözden geçir ve lüks harcamalardan kaçın.",
+                "Venüs'ün etkisiyle bu ay sanatsal ve estetik konulara ilgin artıyor. Kendini şımart, evinde yenilikler yap.",
+                "Toprak", "Venüs", "6", "Zümrüt Yeşili"));
+
+        dbHelper.addZodiac(new Zodiac("İkizler", "21 May - 20 Haz", R.drawable.ikizler, R.drawable.ikizler2,
+                "Zihnin saatte bin kilometre hızla çalışıyor! Etkili iletişimin sayesinde bir krizin önüne geçeceksin.",
+                "Sosyalleşme haftası! Eski dostlarından gelen mesajlar veya spontane buluşmalar modunu çok yükseltecek.",
+                "Merkür bu ay sana yeni bir eğitim kapısı aralıyor. Öğrenmek istediğin bir dil veya yazılım varsa tam vakti.",
+                "Hava", "Merkür", "5", "Sarı"));
+
+        dbHelper.addZodiac(new Zodiac("Yengeç", "21 Haz - 22 Tem", R.drawable.yengec, R.drawable.yengec2,
+                "Sezgilerin bugün alarm veriyor. Karşındaki insanın ne hissettiğini ondan bile önce anlayacaksın.",
+                "Ailevi bağların güçlendiği bir hafta. Evinde yapacağın küçük bir değişiklik ruhuna çok iyi gelecek.",
+                "Ay'ın hareketleri seni duygusal olarak dalgalandırsa da, ayın sonunda derin bir içsel huzur bulacaksın.",
+                "Su", "Ay", "2", "Gümüş Beyazı"));
+
+        dbHelper.addZodiac(new Zodiac("Aslan", "23 Tem - 22 Ağu", R.drawable.aslan, R.drawable.aslan2,
+                "Sahne senin! Liderlik vasıflarını ortaya koy. Bugün kimse senin gölgene bile basamaz.",
+                "Yaratıcılığın zirvede. İş yerinde veya okulda sunacağın bir fikir büyük alkış toplayacak.",
+                "Güneş seni tüm ay boyunca aydınlatıyor. Ancak bu özgüven patlamasında sevdiklerini kırmamaya özen göster.",
+                "Ateş", "Güneş", "1", "Altın Sarısı"));
+
+        dbHelper.addZodiac(new Zodiac("Başak", "23 Ağu - 22 Eyl", R.drawable.basak, R.drawable.basak2,
+                "Detaylara olan hakimiyetin bugün bir hayat kurtaracak. Mükemmeliyetçilik huyun bugün işe yarıyor.",
+                "Rutinlerini yeniden düzenleme zamanı. Sağlıklı beslenme veya yeni bir spor rutini için yıldızlar seni destekliyor.",
+                "Analitik zekan bu ay sana maddi kazançlar sağlayacak. İş başvuruları veya projeler için en verimli ayın.",
+                "Toprak", "Merkür", "5", "Lacivert"));
+
+        dbHelper.addZodiac(new Zodiac("Terazi", "23 Eyl - 22 Eki", R.drawable.terazi, R.drawable.terazi2,
+                "Denge arayışın bugün sonuç veriyor. Kararsızlık huyunu bırakıp net adımlar atma günü.",
+                "İkili ilişkilerde romantizmin tavan yaptığı bir hafta. Partnerinle veya yakın bir dostunla sorunları çözeceksiniz.",
+                "Venüs seni bu ay sosyalleşmeye itiyor. Katılacağın bir etkinlikte kalbini hızlandıracak biriyle tanışabilirsin.",
+                "Hava", "Venüs", "6", "Pembe"));
+
+        dbHelper.addZodiac(new Zodiac("Akrep", "23 Eki - 21 Kas", R.drawable.akrep, R.drawable.akrep2,
+                "Küllerinden doğuyorsun. Bugün içsel bir dönüşüm yaşıyor ve toksik bir düşünceyi tamamen zihninden atıyorsun.",
+                "Mistik konulara ilgin artabilir. Sezgilerini dinleyerek alacağın bir risk, sana büyük bir kazanç olarak dönecek.",
+                "Plüton'un derinliği bu ay seni stratejik yapacak. Maddi konularda çok karlı yatırımlar yapabilirsin.",
+                "Su", "Plüton", "8", "Bordo"));
+
+        dbHelper.addZodiac(new Zodiac("Yay", "22 Kas - 21 Ara", R.drawable.yay, R.drawable.yay2,
+                "İçindeki macera ateşi yanıyor! Bugün rutin işlerden sıyrılıp yeni bir şeyler keşfetmek isteyeceksin.",
+                "Şans gezegeni Jüpiter arkanda. Bu hafta beklediğin hukuki veya eğitimsel bir haber nihayet olumlu sonuçlanacak.",
+                "Özgürlüğüne en çok düşkün olduğun aydasın. Hayatı sorgulayacak, yepyeni bir yaşam felsefesi benimseyeceksin.",
+                "Ateş", "Jüpiter", "3", "Mor"));
+
+        dbHelper.addZodiac(new Zodiac("Oğlak", "22 Ara - 19 Oca", R.drawable.oglak, R.drawable.oglak2,
+                "Disiplin senin göbek adın. Masandaki işleri öyle bir hızla halledeceksin ki, herkes sana hayran kalacak.",
+                "Kariyer evinde büyük bir patlama! Yöneticilerin emeklerini nihayet görüyor. Terfi veya prim kapıda.",
+                "Satürn'ün zorlayıcı etkileri bu ay meyvesini veriyor. Yorulacaksın ama elde edeceğin başarı buna sonuna kadar değecek.",
+                "Toprak", "Satürn", "8", "Koyu Yeşil"));
+
+        dbHelper.addZodiac(new Zodiac("Kova", "20 Oca - 18 Şub", R.drawable.kova, R.drawable.kova2,
+                "Orijinal ve asi fikirlerinle bugün kuralları yıkmaya hazırsın. Teknolojik bir sorunu zekanla çözeceksin.",
+                "Grup çalışmaları ve ekip projeleri bu haftanın ana teması. Arkadaş grubunla harika bir iş çıkaracaksınız.",
+                "Uranüs seni köklü değişimlere itiyor. Taşınma, iş değiştirme veya yeni bir tarz denemek için bu ay çok uygun.",
+                "Hava", "Uranüs", "4", "Turkuaz"));
+
+        dbHelper.addZodiac(new Zodiac("Balık", "19 Şub - 20 Mar", R.drawable.balik, R.drawable.balik2,
+                "İlham perileri bugün omzunda! Sanatsal yeteneklerini konuşturmak ve hayal kurmak için mükemmel bir gün.",
+                "Rüyalarının mesajlarına dikkat et, bilinçaltın sana bu hafta çok önemli şifreler veriyor. Empatin yüksek.",
+                "Ruhsal şifalanma ayındasın. Eski yaralarını saracak ve içsel huzuru bulacaksın. Aşkta çok romantik bir dönem.",
+                "Su", "Neptün", "7", "Deniz Mavisi"));
     }
 }
